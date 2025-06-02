@@ -1,0 +1,55 @@
+# === Julia-specific ===
+/Manifest.toml
+/.julia/
+*.jl.cov
+*.jl.mem
+*.jl.*.cov
+*.jl.*.mem
+*.ji
+
+# Precompiled module caches
+.julia/compiled/
+
+# === Editor/IDE files ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# === OS and file system ===
+.DS_Store
+Thumbs.db
+
+# === Plots / outputs ===
+*.png
+*.pdf
+*.svg
+
+# === Jupyter notebooks ===
+.ipynb_checkpoints/
+*.ipynb
+
+# === Compiled output ===
+*.o
+*.so
+*.a
+*.dylib
+*.exe
+
+# === Test and dev logs ===
+test/output/
+logs/
+
+# === Backup or temp files ===
+*.bak
+*.tmp
+*.old
+
+# === User/project-local ===
+/local_config.jl
+.env
+
+# === Misc ===
+coverage/
+
