@@ -84,8 +84,4 @@ Contributions are welcome!
 ## **📄 License**  
 MIT License. See [LICENSE](LICENSE).  
 
----
 
-### ✨ *Tip*: Add screenshots/GIFs of plots in `/examples` to make it visually appealing!  
-
----
