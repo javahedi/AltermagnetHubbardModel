@@ -42,8 +42,7 @@ function ModelParams(;
     lattice::Symbol,
     t::Float64,
     t_prime::Float64,
-    δ::Float64,
-    λ_R::Float64, 
+    δ::Float64, 
     U::Float64,
     n::Float64,
     β::Float64,
@@ -54,7 +53,7 @@ function ModelParams(;
     if !(lattice in [SQUARE, HONEYCOMB, TRIANGULAR])
         error("Invalid lattice type: $lattice")
     end
-    ModelParams(lattice, t, t_prime, δ, λ_R, U, n, β, kpoints, mixing, tol)
+    ModelParams(lattice, t, t_prime, δ,  U, n, β, kpoints, mixing, tol)
 end
 
 
