@@ -51,7 +51,7 @@ This Julia package provides tools for studying the **Altermagnetic Hubbard Model
 bands = compute_bands(parameters)
 plot_fermi_surface(bands)
 ```
-![Example Band Structure](examples/band_plot.png) *(replace with actual image)*  
+![Example Band Structure](examples/band.png) *(replace with actual image)*  
 
 ### **2. Self-Consistent Mean-Field Solution**  
 ```julia
