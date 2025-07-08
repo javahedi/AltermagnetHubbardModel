@@ -16,11 +16,13 @@ module AltermagneticHubbardModel
     include("SelfConsistentLoop.jl")
     @reexport using .SelfConsistentLoop
 
-    include("BandStructurePlotting.jl")
-    @reexport using .BandStructurePlotting
-
+  
     include("FermiSurface.jl")
     @reexport using .FermiSurface
+
+
+    include("BandStructurePlotting.jl")
+    @reexport using .BandStructurePlotting
 
 
     include("ConductivityTensor.jl")
@@ -28,6 +30,15 @@ module AltermagneticHubbardModel
 
     include("SpectralFunction.jl")
     @reexport using .SpectralFunction
+
+    #include("SpectralFunctionFull.jl")
+    #@reexport using .SpectralFunctionFull
+
+    #include("BandStructurePlottingFull.jl")
+    #@reexport using .BandStructurePlottingFull
+
+    #include("ConductivityTensorFull.jl")
+    #@reexport using .ConductivityTensorFull
 
 
 end # module

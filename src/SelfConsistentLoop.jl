@@ -1,48 +1,68 @@
 module SelfConsistentLoop
 
-#using ..ModelParameters
-#using ..LatticeGeometry
-#using ..ModelHamiltonian
 using AltermagneticHubbardModel
 using LinearAlgebra
 
 export run_scf, find_chemical_potential, fermi
 
 
+"""
+    fermi(ϵ, μ, β)
 
-
+Fermi-Dirac distribution function.
+"""
 function fermi(ϵ::Float64, μ::Float64, β::Float64)
     1.0 / (exp(β * (ϵ - μ)) + 1.0)
 end
 
-function calculate_observables(H::AbstractMatrix, μ::Float64, β::Float64)
+
+
+function calculate_observables(H::AbstractMatrix, μ::Float64, β::Float64, lattice::Symbol)
     vals, vecs = eigen(Hermitian(H))
-    n = zeros(size(H))
+    n = zeros(ComplexF64, size(H))  # Ensure complex for SOC
     total_density = 0.0
     for (i,ϵ) in enumerate(vals)
         f = fermi(ϵ, μ, β)
-        n += f * vecs[:,i] * vecs[:,i]'
+        n += f * vecs[:,i] * vecs[:,i]'  # Outer product
         total_density += f
     end
-    δm = (n[1,1] - n[2,2] - n[3,3] + n[4,4]) / 4
-    total_density /= 2  # Normalize by spin degrees
-    return δm, total_density
+    
+    if lattice == HEXATRIANGULAR
+        # 3-sublattice altermagnetic order parameter
+        n_real = real(n)
+        # Proper 3-sublattice altermagnetic order
+        δm = (n_real[1,1] - n_real[2,2] + n_real[3,3] - n_real[4,4] + n_real[5,5] - n_real[6,6]) / 6
+    else
+        # Original 2-sublattice formula
+        n_real = real(n)
+        δm = (n_real[1,1] - n_real[2,2] - n_real[3,3] + n_real[4,4]) / 4
+    end
+    return δm, total_density/2 # Normalize by (2 spins )
 end
 
+
+"""
+    find_chemical_potential(params, δm; μ_min, μ_max)
+
+Find chemical potential μ that gives target density n using bisection method.
+"""
 function find_chemical_potential(params::ModelParams, δm::Float64; μ_min=-10.0, μ_max=10.0)
-    kpoints = generate_kpoints(params.lattice, params.kpoints)
+    kpoints  = generate_kpoints(params.lattice, params.kpoints)
     target_n = params.n
     
     function compute_n(μ)
         n_total = 0.0
         for k in kpoints
-            H = build_hamiltonian(k, params, δm)
-            vals, _ = eigen(Hermitian(H))
+            H        = build_hamiltonian(k, params, δm)
+            vals, _  = eigen(Hermitian(H))
             n_total += sum(fermi.(vals, μ, params.β))
         end
+        
         return n_total / (2 * length(kpoints))
+        
     end
     
+    # Bisection search with convergence check
     # Bisection search
     while μ_max - μ_min > params.tol
         μ = (μ_min + μ_max) / 2
@@ -55,6 +75,8 @@ function find_chemical_potential(params::ModelParams, δm::Float64; μ_min=-10.0
     end
     
     return (μ_min + μ_max) / 2
+    
+    
 end
 
 """
@@ -80,12 +102,12 @@ function run_scf(params::ModelParams; verbose::Bool=true)
         δm_new = 0.0
         n_total = 0.0
         for k in kpoints
-            H = build_hamiltonian(k, params, δm)
-            δm_k, n_k = calculate_observables(H, μ, params.β)
+            H         = build_hamiltonian(k, params, δm)
+            δm_k, n_k = calculate_observables(H, μ, params.β, params.lattice)
             δm_new += δm_k
             n_total += n_k
         end
-        δm_new /= length(kpoints)
+        δm_new  /= length(kpoints)
         n_total /= length(kpoints)
         
         # Mixing

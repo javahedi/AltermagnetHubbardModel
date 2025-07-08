@@ -6,11 +6,12 @@ const plt = PyPlot  # Create an alias for PyPlot
 function main()
     # Set up parameters for square lattice altermagnet
     params = ModelParams(
-        lattice = SQUARE,  # Change to SQUARE for square lattice
+        lattice = HEXATRIANGULAR,  # Change to SQUARE for square lattice
         t       = 1.0,
-        t_prime = 0.3,
-        δ       = 0.8,
-        U       = 3.5,
+        t_prime = 0.0,
+        δ       = 0.8, 
+        U       = 0.0,
+        λ       = 0.0,  # Rashba SOC strength
         n       = 1.0,  # half-filling
         β       = 10000.0,  # T = 0.0001
         kpoints = 100,
@@ -34,39 +35,33 @@ function main()
     plt.show()
     
    
-    # Save then show
-    #plt.savefig("band_structure_U$(params.U).pdf",
-    #           bbox_inches="tight",
-    #           dpi=300,
-    #           facecolor='w',
-    #           edgecolor='w')
-    # 
-    #println("Successfully saved band_structure_U$(params.U).pdf")
-    #fig = plot_fermi_surface_comparison(params, δm_final)
-    #plt.savefig("fermi_comparison.pdf", bbox_inches="tight", dpi=300)
-    #plt.show()
-
-    
-    # Calculate all components
     σ = calculate_conductivity(params, δm_final)
+    println("longitudinal up spin = ", σ.up_longitudinal)
+    println("longitudinal down spin = ", σ.down_longitudinal)
+    println("transverse up spin = ", σ.up_transverse)
+    println("transverse down spin = ", σ.down_transverse)
+    println("Hall up spin = ", σ.up_Hall)
+    println("Hall down spin = ", σ.down_Hall)
 
-    println("Spin-up:")
-    println("σ_xx = ", σ.up_longitudinal[1], " σ_yy = ", σ.up_longitudinal[2])
-    println("Transverse = ", σ.up_transverse)
-    println("Hall up = ", σ.up_Hall)
+    # Calculate all components of the total charge conductivity tensor
+    #σ_charge = calculate_conductivity(params, δm_final)
 
-    println("\nSpin-down:")
-    println("σ_xx = ", σ.dn_longitudinal[1], " σ_yy = ", σ.dn_longitudinal[2])
-    println("Transverse = ", σ.dn_transverse)
-    println("Hall dn = ", σ.dn_Hall)
-    println("Spin Hall = ", σ.spin_Hall)
-    σ_spin_Hall = (σ.up_Hall - σ.dn_Hall) / 2
-    println("Spin Hall conductivity = ", σ_spin_Hall)
+    #println("Total Charge Conductivity Tensor:")
+    #println("σ_xx = ", σ_charge.charge_xx)
+    #println("σ_yy = ", σ_charge.charge_yy)
+    #println("σ_xy = ", σ_charge.charge_xy)
+    #println("σ_yx = ", σ_charge.charge_yx)
+
+    #println("\nDerived Charge Conductivity Components:")
+    #println("Longitudinal (σ_xx, σ_yy) = ", σ_charge.charge_longitudinal)
+    #println("Transverse Symmetric ( (σ_xy + σ_yx)/2 ) = ", σ_charge.charge_transverse_symmetric)
+    #println("Hall Antisymmetric ( (σ_xy - σ_yx)/2 ) = ", σ_charge.charge_Hall_antisymmetric)
+
 
     
-    fig = plot_spectral_function(params, δm_final)
+    #fig = plot_spectral_function(params, δm_final)
     #plt.savefig("spectral_function.pdf")
-    plt.show()
+    #plt.show()
     
     
 end

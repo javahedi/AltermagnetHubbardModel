@@ -26,13 +26,37 @@ function calculate_velocity(k::Tuple{Float64,Float64}, params::ModelParams, δm:
     return (H_plus - H_minus) / (2Δk)
 end
 
-"""
-    project_spin_block(H::Matrix{Float64}, spin::Symbol)
 
-Extract the 2×2 spin block (:up or :dn) from the full 4×4 Hamiltonian.
+
 """
-function project_spin_block(H::AbstractArray, spin::Symbol)
-    return spin == :up ? H[1:2, 1:2] : H[3:4, 3:4]
+    project_spin_block(H::AbstractMatrix, spin::Symbol)
+
+Extract the spin block (:up or :dn) from the Hamiltonian matrix.
+For 6×6 matrices (3-sublattice system), returns 3×3 blocks.
+For 4×4 matrices (2-sublattice system), returns 2×2 blocks.
+
+# Arguments
+- `H`: Hamiltonian matrix (4×4 or 6×6)
+- `spin`: :up or :dn to select spin sector
+
+# Returns
+Submatrix for the requested spin sector
+"""
+function project_spin_block(H::AbstractMatrix, spin::Symbol)
+    size_H = size(H)
+    
+    if size_H == (4,4)
+        # 2-sublattice case (e.g., graphene)
+        return spin == :up ? @view(H[1:2, 1:2]) : @view(H[3:4, 3:4])
+    elseif size_H == (6,6)
+        # 3-sublattice case (hextriangular)
+        return spin == :up ? @view(H[1:3, 1:3]) : @view(H[4:6, 4:6])
+    else
+        error("Unsupported Hamiltonian size: $size_H. Expected 4×4 or 6×6")
+    end
+    
+    # Validate spin argument
+    spin ∉ (:up, :dn) && error("Invalid spin: $spin. Must be :up or :dn")
 end
 
 """
@@ -96,7 +120,9 @@ end
 
 Calculate (σ_longitudinal, σ_transverse, σ_Hall) for a given spin.
 """
-function calculate_spin_conductivity(params::ModelParams, δm::Float64, spin::Symbol; Γ=0.01, nk=50)
+function calculate_spin_conductivity(params::ModelParams, 
+                                    δm::Float64, spin::Symbol; Γ=0.01, nk=50)
+                                    
     μ       = find_chemical_potential(params, δm)
     kpoints = generate_kpoints(params.lattice, nk)
 
@@ -159,9 +185,9 @@ function calculate_conductivity(params::ModelParams, δm::Float64; Γ=0.01, nk=5
         up_longitudinal = up.longitudinal,
         up_transverse   = up.transverse,
         up_Hall         = up.hall,
-        dn_longitudinal = dn.longitudinal,
-        dn_transverse   = dn.transverse,
-        dn_Hall         = dn.hall,
+        down_longitudinal = dn.longitudinal,
+        down_transverse   = dn.transverse,
+        down_Hall         = dn.hall,
         spin_Hall       = up.hall - dn.hall
     )
 end

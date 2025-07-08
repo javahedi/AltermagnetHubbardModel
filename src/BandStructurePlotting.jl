@@ -38,11 +38,11 @@ function get_high_symmetry_path(lattice::Symbol, npoints::Int=100)
         labels = ["Γ", "X", "M", "X2", "Γ"]
         ticks = [1, npoints, 2npoints, 3npoints, 4npoints]
         
-    elseif lattice == HONEYCOMB
+    elseif lattice == HEXATRIANGULAR
         # Γ -> K -> M -> Γ for honeycomb
-        Γ = (0.0, 0.0)
-        M = (π, 2π/(2√3))  # K point in honeycomb
-        K = (4π/3, 0.0)
+        Γ = [0.0, 0.0]
+        K = [4π/3, 0.0]
+        M = [π, π/√3]
         
         kpath = vcat(
             [(Γ[1] + t*(K[1]-Γ[1]), Γ[2] + t*(K[2]-Γ[2])) for t in range(0, 1, length=npoints)],
@@ -71,26 +71,35 @@ Plot spin-resolved band structure along high-symmetry path.
 
 function plot_band_structure(params::ModelParams, δm::Float64; npoints=100)
     kpath, labels, ticks = get_high_symmetry_path(params.lattice, npoints)
+
+    # Determine system size based on lattice
+    if params.lattice == HEXATRIANGULAR
+        matrix_size = 6  # 3 sublattices × 2 spins
+        nbands = 3       # 3 bands per spin
+    else
+        matrix_size = 4  # 2 sublattices × 2 spins
+        nbands = 2       # 2 bands per spin
+    end
     
     # Storage for 2 spin-up and 2 spin-down bands
-    ϵ_up = zeros(length(kpath), 2)
-    ϵ_dn = zeros(length(kpath), 2)
+    ϵ_up = zeros(length(kpath), nbands)
+    ϵ_dn = zeros(length(kpath), nbands)
     
     for (i,k) in enumerate(kpath)
         H = build_hamiltonian(k, params, δm)
         
-        # Explicitly extract spin blocks
-        H_up = H[1:2, 1:2]   # ↑ block (A↑, B↑)
-        H_dn = H[3:4, 3:4]   # ↓ block (A↓, B↓)
+        # Extract and diagonalize spin blocks
+        H_up = H[1:matrix_size÷2, 1:matrix_size÷2]
+        H_dn = H[matrix_size÷2+1:end, matrix_size÷2+1:end]
         
-        # Diagonalize separately
-        ϵ_up[i,:] = eigvals(Hermitian(H_up))
-        ϵ_dn[i,:] = eigvals(Hermitian(H_dn))
+        ϵ_up[i,:] = sort(real(eigvals(Hermitian(H_up)))[1:nbands])
+        ϵ_dn[i,:] = sort(real(eigvals(Hermitian(H_dn)))[1:nbands])
+
     end
     
     # Plotting (same as before)
     fig, ax = plt.subplots(figsize=(7,3))
-    for b in 1:2
+    for b in 1:nbands
         ax.plot(1:length(kpath), ϵ_up[:,b], "r-", label=b==1 ? "Spin Up" : "")
         ax.plot(1:length(kpath), ϵ_dn[:,b], "b-", label=b==1 ? "Spin Down" : "")
     end

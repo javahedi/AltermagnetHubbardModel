@@ -15,6 +15,16 @@ function get_reciprocal_vectors(lattice::Symbol)
         return ([2π, 2π/√3], [2π, -2π/√3])
     elseif lattice == TRIANGULAR
         return ([2π, -2π/√3], [0.0, 4π/√3])
+    elseif lattice == HEXATRIANGULAR
+        # Hextriangular lattice reciprocal vectors
+        # Primitive vectors in real space:
+        a1 = [cos(π/3), sin(π/3)]  # (1/2, √3/2)
+        a2 = [0.0, 1.0]
+        
+        # Calculate reciprocal vectors using 2π (aᵢ·bⱼ) = 2πδᵢⱼ
+        b1 = 2π * [1, -1/√3]
+        b2 = 2π * [0, 2/√3]
+        return (b1, b2)
     else
         error("Unknown lattice type: $lattice. Valid options are: $SQUARE, $HONEYCOMB, $TRIANGULAR")
     end
