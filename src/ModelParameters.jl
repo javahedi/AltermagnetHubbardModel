@@ -5,9 +5,10 @@ const SQUARE = :square
 const HONEYCOMB = :honeycomb
 const TRIANGULAR = :triangular
 const HEXATRIANGULAR = :hexatriangular
+const ALPHA_T3 = :alpha_t3
 
 # Export lattice types and ModelParams
-export SQUARE, HONEYCOMB, HEXATRIANGULAR, TRIANGULAR, ModelParams
+export SQUARE, HONEYCOMB, HEXATRIANGULAR, TRIANGULAR, ALPHA_T3, ModelParams
 
 """
     ModelParams
@@ -23,6 +24,7 @@ Parameters for the altermagnetic Hubbard model.
 - `λ::Float64`: Rashba spin-orbit coupling strength
 - `n::Float64`: Electron filling (n=1 for half-filling)
 - `β::Float64`: Inverse temperature (1/kT)
+- `α::Float64`: α parameter for T3 lattice
 - `kpoints::Int`: Number of k-points per dimension
 - `mixing::Float64`: Mixing parameter for SCF (0.0-1.0)
 - `tol::Float64`: Convergence tolerance
@@ -36,6 +38,7 @@ struct ModelParams
     λ::Float64
     n::Float64
     β::Float64
+    α::Float64
     kpoints::Int
     mixing::Float64
     tol::Float64
@@ -50,14 +53,15 @@ function ModelParams(;
     λ::Float64,
     n::Float64,
     β::Float64,
+    α::Float64,
     kpoints::Int,
     mixing::Float64,
     tol::Float64
 )
-    if !(lattice in [SQUARE, HONEYCOMB, HEXATRIANGULAR, TRIANGULAR])
+    if !(lattice in [SQUARE, HONEYCOMB, HEXATRIANGULAR, TRIANGULAR, ALPHA_T3])
         error("Invalid lattice type: $lattice")
     end
-    ModelParams(lattice, t, t_prime, δ, U, λ, n, β, kpoints, mixing, tol)
+    ModelParams(lattice, t, t_prime, δ, U, λ, n, β, α, kpoints, mixing, tol)
 end
 
 

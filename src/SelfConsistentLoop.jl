@@ -20,6 +20,7 @@ end
 function calculate_observables(H::AbstractMatrix, μ::Float64, β::Float64, lattice::Symbol)
     vals, vecs = eigen(Hermitian(H))
     n = zeros(ComplexF64, size(H))  # Ensure complex for SOC
+
     total_density = 0.0
     for (i,ϵ) in enumerate(vals)
         f = fermi(ϵ, μ, β)
@@ -32,12 +33,23 @@ function calculate_observables(H::AbstractMatrix, μ::Float64, β::Float64, latt
         n_real = real(n)
         # Proper 3-sublattice altermagnetic order
         δm = (n_real[1,1] - n_real[2,2] + n_real[3,3] - n_real[4,4] + n_real[5,5] - n_real[6,6]) / 6
-    else
+    elseif lattice == SQUARE 
         # Original 2-sublattice formula
+        # (A↑, B↑, A↓, B↓)
         n_real = real(n)
         δm = (n_real[1,1] - n_real[2,2] - n_real[3,3] + n_real[4,4]) / 4
+    elseif lattice == ALPHA_T3
+        # (A↑, B↑, C↑, A↓, B↓, C↓)
+        n_real = real(n)
+        # δm = (m_A - m_B) / 2
+        mA = n_real[1,1] - n_real[4,4]  # spin↑ - spin↓ on A
+        mB = n_real[2,2] - n_real[5,5]  # spin↑ - spin↓ on B
+        δm = (mA - mB) / 4
+
+        #m_total = sum(real(n[i,i]) - real(n[i+3,i+3]) for i in 1:3)  # A, B, C
+
     end
-    return δm, total_density/2 # Normalize by (2 spins )
+    return δm, total_density/2 #, m_total
 end
 
 
@@ -62,9 +74,8 @@ function find_chemical_potential(params::ModelParams, δm::Float64; μ_min=-10.0
         
     end
     
-    # Bisection search with convergence check
-    # Bisection search
-    while μ_max - μ_min > params.tol
+    # Bisection search  
+    while (μ_max - μ_min > params.tol)
         μ = (μ_min + μ_max) / 2
         current_n = compute_n(μ)
         if current_n < target_n
@@ -72,6 +83,7 @@ function find_chemical_potential(params::ModelParams, δm::Float64; μ_min=-10.0
         else
             μ_max = μ
         end
+       
     end
     
     return (μ_min + μ_max) / 2
@@ -103,7 +115,7 @@ function run_scf(params::ModelParams; verbose::Bool=true)
         n_total = 0.0
         for k in kpoints
             H         = build_hamiltonian(k, params, δm)
-            δm_k, n_k = calculate_observables(H, μ, params.β, params.lattice)
+            δm_k, n_k  = calculate_observables(H, μ, params.β, params.lattice)
             δm_new += δm_k
             n_total += n_k
         end

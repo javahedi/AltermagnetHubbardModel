@@ -38,20 +38,20 @@ function get_high_symmetry_path(lattice::Symbol, npoints::Int=100)
         labels = ["Γ", "X", "M", "X2", "Γ"]
         ticks = [1, npoints, 2npoints, 3npoints, 4npoints]
         
-    elseif lattice == HEXATRIANGULAR
+    elseif lattice == HEXATRIANGULAR || lattice == ALPHA_T3
         # Γ -> K -> M -> Γ for honeycomb
         Γ = [0.0, 0.0]
         K = [4π/3, 0.0]
+        Kp = [2π/3, 2π/√3]  # K' point in hexagonal BZ
         M = [π, π/√3]
         
         kpath = vcat(
-            [(Γ[1] + t*(K[1]-Γ[1]), Γ[2] + t*(K[2]-Γ[2])) for t in range(0, 1, length=npoints)],
             [(K[1] + t*(M[1]-K[1]), K[2] + t*(M[2]-K[2])) for t in range(0, 1, length=npoints)],
             [(M[1] + t*(Γ[1]-M[1]), M[2] + t*(Γ[2]-M[2])) for t in range(0, 1, length=npoints)]
         )
         
-        labels = ["Γ", "K", "M", "Γ"]
-        ticks = [1, npoints, 2npoints, 3npoints]
+        labels = ["K", "M", "Γ"]
+        ticks = [1, npoints, 2npoints]
         
     else
         error("Unsupported lattice for k-path: $lattice")
@@ -67,13 +67,11 @@ Plot spin-resolved band structure along high-symmetry path.
 """
 
 
-
-
 function plot_band_structure(params::ModelParams, δm::Float64; npoints=100)
     kpath, labels, ticks = get_high_symmetry_path(params.lattice, npoints)
 
     # Determine system size based on lattice
-    if params.lattice == HEXATRIANGULAR
+    if params.lattice == HEXATRIANGULAR || params.lattice == ALPHA_T3
         matrix_size = 6  # 3 sublattices × 2 spins
         nbands = 3       # 3 bands per spin
     else

@@ -20,6 +20,7 @@ function build_hamiltonian(k::Tuple{Float64,Float64}, params::ModelParams, δm::
     U = params.U
     δ = params.δ
     λ = params.λ
+    α = params.α
 
     
     if params.lattice == SQUARE
@@ -139,6 +140,49 @@ function build_hamiltonian(k::Tuple{Float64,Float64}, params::ModelParams, δm::
         H[6,5] = conj(γk)
         H[4,6] = γk  # A↓-C↓ hopping
         H[6,4] = conj(γk)
+
+    elseif params.lattice == ALPHA_T3
+
+        # Define the three sublattices: A, B, C
+        # and NN hoppings: A–B (with cos(α) t), B–C (with sin(α) t)
+        # Position vectors in momentum space (relative, assuming unit cell with A at origin)
+        δAB = [[1.0, 0.0], [-0.5, √3/2], [-0.5, -√3/2]]
+        δBC = [[-1.0, 0.0], [0.5, -√3/2], [0.5, √3/2]]
+
+        # Initialize 6x6 Hamiltonian: basis = (A↑, B↑, C↑, A↓, B↓, C↓)
+        H = zeros(ComplexF64, 6, 6)
+
+        # Spin-conserving hopping: γ_AB and γ_BC
+        γ_AB = -t * cos(α) * sum(exp(-1im * dot(k, d)) for d in δAB)
+        γ_BC = -t * sin(α) * sum(exp(-1im * dot(k, d)) for d in δBC)
+
+        # Mean-field onsite terms with Hubbard U on A and B
+        hA_up = -U * δm
+        hB_up = U * δm
+        hC_up = 0.0
+
+        hA_dn = U * δm
+        hB_dn = -U * δm
+        hC_dn = 0.0
+
+        # Fill in Spin-up block
+        H[1,1] = hA_up
+        H[2,2] = hB_up
+        H[3,3] = hC_up
+        H[1,2] = γ_AB
+        H[2,1] = conj(γ_AB)
+        H[2,3] = γ_BC
+        H[3,2] = conj(γ_BC)
+
+        # Fill in Spin-down block
+        H[4,4] = hA_dn
+        H[5,5] = hB_dn
+        H[6,6] = hC_dn
+        H[4,5] = γ_AB
+        H[5,4] = conj(γ_AB)
+        H[5,6] = γ_BC
+        H[6,5] = conj(γ_BC)
+
 
             
     elseif params.lattice == TRIANGULAR

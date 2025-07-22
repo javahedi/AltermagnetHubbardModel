@@ -49,21 +49,20 @@ function get_high_symmetry_path(lattice::Symbol, npoints::Int=100)
         labels = ["Γ", "X", "M", "X'", "Γ"] # Changed X2 to X' for common notation
         ticks = [1, npoints, 2npoints, 3npoints, 4npoints]
         
-    elseif params.lattice == HONEYCOMB
+   elseif lattice == HEXATRIANGULAR || lattice == ALPHA_T3
         # Γ -> K -> M -> Γ for honeycomb
-        # Ensure these k-points are in the correct BZ for honeycomb.
-        Γ = (0.0, 0.0)
-        K = (4π/3, 0.0) # K point in honeycomb
-        M = (π, 2π/(2√3)) # M point in honeycomb
+        Γ = [0.0, 0.0]
+        K = [4π/3, 0.0]
+        Kp = [2π/3, 2π/√3]  # K' point in hexagonal BZ
+        M = [π, π/√3]
         
         kpath = vcat(
-            [(Γ[1] + t*(K[1]-Γ[1]), Γ[2] + t*(K[2]-Γ[2])) for t in range(0, 1, length=npoints)],
             [(K[1] + t*(M[1]-K[1]), K[2] + t*(M[2]-K[2])) for t in range(0, 1, length=npoints)],
             [(M[1] + t*(Γ[1]-M[1]), M[2] + t*(Γ[2]-M[2])) for t in range(0, 1, length=npoints)]
         )
         
-        labels = ["Γ", "K", "M", "Γ"]
-        ticks = [1, npoints, 2npoints, 3npoints]
+        labels = ["K", "M", "Γ"]
+        ticks = [1, npoints, 2npoints]
         
     else
         error("Unsupported lattice for k-path: $lattice")
@@ -81,18 +80,32 @@ Optionally, spin polarization can be visualized by color.
 """
 function plot_band_structure(params::ModelParams, δm::Float64; npoints=100)
     kpath, labels, ticks = get_high_symmetry_path(params.lattice, npoints)
+
+    # Determine system size based on lattice
+    if params.lattice == HEXATRIANGULAR || params.lattice == ALPHA_T3
+        matrix_size = 6  # 3 sublattices × 2 spins
+        nbands = 3       # 3 bands per spin
+        # Define the Sz operator in your (A↑, B↑, A↓, B↓) basis
+        # Sz = 1/2 * diag(1, 1, 0, -1, -1, 0)
+        Sz_op = diagm([0.5, 0.5, 0.0, -0.5, -0.5, 0.0]) # Julia's diagm creates a diagonal matrix
+
+    else
+        matrix_size = 4  # 2 sublattices × 2 spins
+        nbands = 2       # 2 bands per spin
+        # Define the Sz operator in your (A↑, B↑, A↓, B↓) basis
+        # Sz = 1/2 * diag(1, 1, -1, -1)
+        Sz_op = diagm([0.5, 0.5, -0.5, -0.5]) # Julia's diagm creates a diagonal matrix
+
+    end
     
     # Storage for all 4 bands (eigenvalues)
-    all_ϵ = zeros(length(kpath), 4)
+    all_ϵ = zeros(length(kpath), matrix_size)
     
     # Optional: Storage for average spin polarization (e.g., <Sz>) for each band
     # This allows coloring the bands based on their spin character
-    avg_Sz = zeros(length(kpath), 4) # Stores the average Sz for each band
+    avg_Sz = zeros(length(kpath), matrix_size) # Stores the average Sz for each band
     
-    # Define the Sz operator in your (A↑, B↑, A↓, B↓) basis
-    # Sz = 1/2 * diag(1, 1, -1, -1)
-    Sz_op = diagm([0.5, 0.5, -0.5, -0.5]) # Julia's diagm creates a diagonal matrix
-
+    
     for (i,k) in enumerate(kpath)
         H = build_hamiltonian(k, params, δm)
         
@@ -105,7 +118,7 @@ function plot_band_structure(params::ModelParams, δm::Float64; npoints=100)
         all_ϵ[i,:] = vals[perm]
         
         # Calculate average <Sz> for each band (eigenvector)
-        for b in 1:4
+        for b in 1:matrix_size
             # For each eigenvector (column `vecs[:, perm[b]]`), calculate <ψ|Sz_op|ψ>
             # <ψ|Sz_op|ψ> = ψ_dagger * Sz_op * ψ
             avg_Sz[i,b] = real(vecs[:, perm[b]]' * Sz_op * vecs[:, perm[b]])
@@ -127,7 +140,7 @@ function plot_band_structure(params::ModelParams, δm::Float64; npoints=100)
     # Create a colormap
     cmap = plt.cm.get_cmap("bwr") # Blue-White-Red colormap
 
-    for b in 1:4 # Iterate through the 4 bands
+    for b in 1:matrix_size # Iterate through the 4 bands
         # Normalize Sz for coloring: map from [min_sz, max_sz] to [0, 1]
         # Avoid division by zero if min_sz == max_sz (e.g., if all Sz are 0)
         norm_sz = (max_sz - min_sz) > 1e-6 ? (avg_Sz[:,b] .- min_sz) ./ (max_sz - min_sz) : 0.5 * ones(length(kpath))
