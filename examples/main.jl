@@ -6,11 +6,11 @@ const plt = PyPlot  # Create an alias for PyPlot
 function main()
     # Set up parameters for square lattice altermagnet
     params = ModelParams(
-        lattice = ALPHA_T3,  #  SQUARE, HEXATRIANGULAR, ALPHA_T3
+        lattice = SQUARE,  #  SQUARE, HEXATRIANGULAR, ALPHA_T3
         t       = 1.0,
         t_prime = 0.3,
         δ       = 0.8,   # Altermagnetic order parameter
-        U       = 4.0,
+        U       = 3.5,
         λ       = 0.0,  # Rashba SOC strength
         n       = 1.0,  # half-filling
         β       = 10000.0,  # T = 0.0001
