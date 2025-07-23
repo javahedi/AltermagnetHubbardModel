@@ -146,8 +146,11 @@ function build_hamiltonian(k::Tuple{Float64,Float64}, params::ModelParams, δm::
         # Define the three sublattices: A, B, C
         # and NN hoppings: A–B (with cos(α) t), B–C (with sin(α) t)
         # Position vectors in momentum space (relative, assuming unit cell with A at origin)
-        δAB = [[1.0, 0.0], [-0.5, √3/2], [-0.5, -√3/2]]
-        δBC = [[-1.0, 0.0], [0.5, -√3/2], [0.5, √3/2]]
+        
+        δAB = [[0.0, -1.0], [√3/2, 0.5], [-√3/2, 0.5]]
+        δBC = [[0.0, 1.0], [-√3/2, -0.5], [√3/2, -0.5]]
+
+       
 
         # Initialize 6x6 Hamiltonian: basis = (A↑, B↑, C↑, A↓, B↓, C↓)
         H = zeros(ComplexF64, 6, 6)

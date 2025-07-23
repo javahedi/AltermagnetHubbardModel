@@ -8,13 +8,13 @@ function main()
     params = ModelParams(
         lattice = ALPHA_T3,  #  SQUARE, HEXATRIANGULAR, ALPHA_T3
         t       = 1.0,
-        t_prime = 0.0,
-        δ       = 0.0,   # Altermagnetic order parameter
-        U       = 2.0,
+        t_prime = 0.3,
+        δ       = 0.8,   # Altermagnetic order parameter
+        U       = 4.0,
         λ       = 0.0,  # Rashba SOC strength
         n       = 1.0,  # half-filling
         β       = 10000.0,  # T = 0.0001
-        α       = π/4,  # α parameter for T3 lattice
+        α       = π/12,  # α parameter for T3 lattice
         kpoints = 100,
         mixing  = 0.4,
         tol     = 1e-6
@@ -25,45 +25,39 @@ function main()
     println("\nRunning SCF calculation...")
     
     # Run self-consistent calculation
-    δm_final = run_scf(params)
+    δm_final, m_plus = run_scf(params)
     
     println("\nResults:")
     println("Final altermagnetic order parameter: δm = ", δm_final)
-    
+    println("Final net magnetization: m_+ = ", m_plus)
+
     
     # Plot bands
     fig = plot_band_structure(params, δm_final)
     plt.show()
     
    
-    σ = calculate_conductivity(params, δm_final)
-    println("longitudinal up spin = ", σ.up_longitudinal)
-    println("longitudinal down spin = ", σ.down_longitudinal)
-    println("transverse up spin = ", σ.up_transverse)
-    println("transverse down spin = ", σ.down_transverse)
-    println("Hall up spin = ", σ.up_Hall)
-    println("Hall down spin = ", σ.down_Hall)
+    #σ = calculate_conductivity(params, δm_final)
+    #println("longitudinal up spin = ", σ.up_longitudinal)
+    #println("longitudinal down spin = ", σ.down_longitudinal)
+    #println("transverse up spin = ", σ.up_transverse)
+    #println("transverse down spin = ", σ.down_transverse)
+    #println("Hall up spin = ", σ.up_Hall)
+    #println("Hall down spin = ", σ.down_Hall)
 
-    # Calculate all components of the total charge conductivity tensor
-    #σ_charge = calculate_conductivity(params, δm_final)
+  
 
-    #println("Total Charge Conductivity Tensor:")
-    #println("σ_xx = ", σ_charge.charge_xx)
-    #println("σ_yy = ", σ_charge.charge_yy)
-    #println("σ_xy = ", σ_charge.charge_xy)
-    #println("σ_yx = ", σ_charge.charge_yx)
-
-    #println("\nDerived Charge Conductivity Components:")
-    #println("Longitudinal (σ_xx, σ_yy) = ", σ_charge.charge_longitudinal)
-    #println("Transverse Symmetric ( (σ_xy + σ_yx)/2 ) = ", σ_charge.charge_transverse_symmetric)
-    #println("Hall Antisymmetric ( (σ_xy - σ_yx)/2 ) = ", σ_charge.charge_Hall_antisymmetric)
-
-
-    
     #fig = plot_spectral_function(params, δm_final)
     #plt.savefig("spectral_function.pdf")
     #plt.show()
     
+
+    fig = plot_fermi_surface(params, δm_final; nk=100)
+    if fig
+        plt.show()
+    else
+        println("Fermi surface plot not generated.")
+    end
     
 end
 
