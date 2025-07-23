@@ -22,7 +22,6 @@
 Thumbs.db
 
 # === Plots / outputs ===
-*.png
 *.pdf
 *.svg
 
