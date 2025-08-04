@@ -6,7 +6,7 @@ using BSON: @save, @load
 
 
 
-@load "examples/phaseDiagram_alpha_U_n1.0_2025-07-23_0002.bson" results α_vals U_vals fixed_n
+@load "examples/ALPHA_T3/phaseDiagram_alpha_U_n1.0_2025-07-23_0002.bson" results α_vals U_vals fixed_n
 
 α_grid = collect(α_vals)
 U_grid = collect(U_vals)

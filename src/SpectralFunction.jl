@@ -53,7 +53,7 @@ function plot_spectral_function(params::ModelParams, δm::Float64; nω=200, nk=1
         X2 = (π/2, π/2)
         k_path = [Γ, X, M, X2, Γ]
         xticklabels = ["Γ", "X", "M", "X2'", "Γ"]
-    elseif k_path === nothing && params.lattice == HONEYCOMB
+    elseif k_path === nothing && (params.lattice == HONEYCOMB || params.lattice == KMmodel)
         # Γ-K-M-Γ for honeycomb lattice
         Γ = (0.0, 0.0)
         M = (π, 2π/(2√3))  # K point in honeycomb

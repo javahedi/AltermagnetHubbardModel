@@ -3,17 +3,9 @@ module SelfConsistentLoop
 using AltermagneticHubbardModel
 using LinearAlgebra
 
-export run_scf, find_chemical_potential, fermi
+export run_scf, find_chemical_potential
 
 
-"""
-    fermi(ϵ, μ, β)
-
-Fermi-Dirac distribution function.
-"""
-function fermi(ϵ::Float64, μ::Float64, β::Float64)
-    1.0 / (exp(β * (ϵ - μ)) + 1.0)
-end
 
 
 """
@@ -34,12 +26,13 @@ function calculate_observables(H::AbstractMatrix, μ::Float64, β::Float64, latt
     end
 
     n_real = real(n)  # Physical observables are real
-    
+
     if lattice == HEXATRIANGULAR
         # 3-sublattice altermagnetic order parameter
         n_real = real(n)
-        # Proper 3-sublattice altermagnetic order
-        δm = (n_real[1,1] - n_real[2,2] + n_real[3,3] - n_real[4,4] + n_real[5,5] - n_real[6,6]) / 6
+
+        
+        
     elseif lattice == SQUARE 
         # Original 2-sublattice formula
         # (A↑, B↑, A↓, B↓)
@@ -57,6 +50,13 @@ function calculate_observables(H::AbstractMatrix, μ::Float64, β::Float64, latt
         δm = (mA - mB) / 4             # Staggered magnetization (A-B)
         m_plus = (mA + mB + mC) / 6    # Net magnetization (all sites)
 
+    elseif lattice == KMmodel
+        # For Kane-Mele model (A↑, B↑, A↓, B↓)
+        mA = n_real[1,1] - n_real[3,3]  # A↑ - A↓
+        mB = n_real[2,2] - n_real[4,4]  # B↑ - B↓
+
+        δm = (mA - mB) / 4             # Staggered magnetization (A-B)
+        m_plus = (mA + mB) / 2         # Net magnetization
     end
     return δm, m_plus, total_density/2 
 end
@@ -111,7 +111,8 @@ function run_scf(params::ModelParams; verbose::Bool=true)
     m_plus = 0.0
     iter = 0
     max_iter = 100
-    
+    μ = 0.0
+
     while iter < max_iter
         iter += 1
         δm_prev = δm
@@ -155,7 +156,7 @@ function run_scf(params::ModelParams; verbose::Bool=true)
         println("SCF converged in $iter iterations")
     end
     
-    return δm, m_plus
+    return δm, m_plus, μ
 end
 
 end # module

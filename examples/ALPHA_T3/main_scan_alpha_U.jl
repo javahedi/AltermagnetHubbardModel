@@ -16,7 +16,7 @@ addprocs()  # Add workers as needed
             U       = U,
             λ       = 0.0,
             n       = n,
-            β       = 10000.0,
+            β       = 1000.0,
             α       = α,
             kpoints = 100,
             mixing  = 0.4,
@@ -24,11 +24,11 @@ addprocs()  # Add workers as needed
         )
 
         try
-            δm, m_plus = run_scf(params; verbose=false)
-            return (α=α, U=U, n=n, δm=δm, m_plus=m_plus, error=nothing)
+            δm, m_plus, μ = run_scf(params; verbose=false)
+            return (α=α, U=U, n=n, δm=δm, m_plus=m_plus, μ=μ, error=nothing)
         catch e
             @warn "Failed at α=$(round(α, digits=3)), U=$U: $e"
-            return (α=α, U=U, n=n, δm=NaN, m_plus=NaN, error=string(e))
+            return (α=α, U=U, n=n, δm=NaN, m_plus=NaN, μ=NaN, error=string(e))
         end
     end
 end
@@ -49,14 +49,15 @@ function main()
     results_dict = Dict()
     for r in results
         key = (r.α, r.U)
-        results_dict[key] = (δm=r.δm, m_plus=r.m_plus, error=r.error)
+        results_dict[key] = (δm=r.δm, m_plus=r.m_plus, μ=r.μ, error=r.error)
     end
 
     # Create result matrices for easy plotting
     α_grid = collect(α_vals)
     U_grid = collect(U_vals)
-    δm_matrix = [get(results_dict, (α, U), (δm=NaN, m_plus=NaN, error="")).δm for α in α_grid, U in U_grid]
-    m_plus_matrix = [get(results_dict, (α, U), (δm=NaN, m_plus=NaN, error="")).m_plus for α in α_grid, U in U_grid]
+    δm_matrix = [get(results_dict, (α, U), (δm=NaN, m_plus=NaN, μ=NaN, error="")).δm for α in α_grid, U in U_grid]
+    m_plus_matrix = [get(results_dict, (α, U), (δm=NaN, m_plus=NaN, μ=NaN, error="")).m_plus for α in α_grid, U in U_grid]
+    μ_matrix = [get(results_dict, (α, U), (δm=NaN, m_plus=NaN, μ=NaN, error="")).μ for α in α_grid, U in U_grid]
 
     # Save comprehensive results
     timestamp = Dates.format(now(), "yyyy-mm-dd_HHMMSS")
@@ -64,13 +65,14 @@ function main()
         :results => results_dict,
         :δm_matrix => δm_matrix,
         :m_plus_matrix => m_plus_matrix,
+        :μ_matrix => μ_matrix,
         :α_vals => α_grid,
         :U_vals => U_grid,
         :n => fixed_n,
         :timestamp => timestamp
     )
     
-    filename = "phase_diagram_n$(fixed_n)_$(round(π/4, digits=3))_$timestamp.bson"
+    filename = "phase_diagram_n$(fixed_n)_$timestamp.bson"
     BSON.@save filename save_data
     println("Results saved to $filename")
 
@@ -79,3 +81,5 @@ end
 
 # Execute
 main()
+
+

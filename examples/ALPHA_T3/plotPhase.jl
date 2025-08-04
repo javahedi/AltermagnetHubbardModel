@@ -4,13 +4,15 @@ const plt = PyPlot
 using BSON: @load
 using LaTeXStrings
 
-# Load the alpha-U phase diagram data
-@load "examples/phase_diagram_n1.0_0.785_2025-07-23_212624.bson" save_data
+# Load the α-U phase diagram data
+@load "examples/ALPHA_T3/phase_diagram_n1.0_0.785_2025-07-23_212624.bson" save_data
 
 # Extract data
 α_grid = save_data[:α_vals]
 U_grid = save_data[:U_vals]
-δm_matrix = save_data[:δm_matrix]  # Already properly ordered
+δm_matrix = save_data[:δm_matrix]  
+μ_matrix  = save_data[:μ_matrix]
+
 
 # Create alpha-U heatmap
 figure(figsize=(5,4))
@@ -35,7 +37,9 @@ savefig("heatmap_alpha_U.pdf", dpi=300, bbox_inches="tight")
 # Extract data
 n_grid = save_data[:n_vals]
 U_grid = save_data[:U_vals]
-δm_matrix = save_data[:δm_matrix]  # Already properly ordered
+δm_matrix = save_data[:δm_matrix] 
+μ_matrix  = save_data[:μ_matrix]
+
 
 # Create n-U heatmap
 figure(figsize=(5,4))

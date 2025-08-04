@@ -6,7 +6,7 @@ using BSON: @save, @load
 
 
 
-@load "examples/phaseDiagram_alpha_U_n1.0_2025-07-23_0002.bson" results α_vals U_vals fixed_n
+@load "examples/ALPHA_T3/phaseDiagram_alpha_U_n1.0_2025-07-23_0002.bson" results α_vals U_vals fixed_n
 
 α_grid = collect(α_vals)
 U_grid = collect(U_vals)
@@ -15,7 +15,7 @@ U_grid = collect(U_vals)
 
 
 α = π/4       # Or α_grid[9], etc.
-U = 1.8      # Or U_grid[10], etc.
+U = 4.0      # Or U_grid[10], etc.
 δm = get(results, (α, U), NaN)
 if isnan(δm)
     println("No data available for α = $α and U = $U")

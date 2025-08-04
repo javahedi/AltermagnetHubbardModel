@@ -4,11 +4,13 @@ module ModelParameters
 const SQUARE = :square
 const HONEYCOMB = :honeycomb
 const TRIANGULAR = :triangular
-const HEXATRIANGULAR = :hexatriangular
+const SU3_TRIANGULAR = :su3_triangular
 const ALPHA_T3 = :alpha_t3
+const KMmodel = :km_model
+const HEXATRIANGULAR = :hexatriangular
 
 # Export lattice types and ModelParams
-export SQUARE, HONEYCOMB, HEXATRIANGULAR, TRIANGULAR, ALPHA_T3, ModelParams
+export SQUARE, HONEYCOMB, SU3_TRIANGULAR, TRIANGULAR, ALPHA_T3, KMmodel, HEXATRIANGULAR, ModelParams
 
 """
     ModelParams
@@ -58,7 +60,7 @@ function ModelParams(;
     mixing::Float64,
     tol::Float64
 )
-    if !(lattice in [SQUARE, HONEYCOMB, HEXATRIANGULAR, TRIANGULAR, ALPHA_T3])
+    if !(lattice in [SQUARE, HONEYCOMB, SU3_TRIANGULAR, TRIANGULAR, ALPHA_T3, KMmodel, HEXATRIANGULAR])
         error("Invalid lattice type: $lattice")
     end
     ModelParams(lattice, t, t_prime, δ, U, λ, n, β, α, kpoints, mixing, tol)

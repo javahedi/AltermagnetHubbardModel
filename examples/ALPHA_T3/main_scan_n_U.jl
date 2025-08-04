@@ -24,19 +24,19 @@ addprocs()  # Add workers as needed
         )
 
         try
-            δm, m_plus = run_scf(params; verbose=false)
-            return (n=n, U=U, α=α, δm=δm, m_plus=m_plus, error=nothing)
+            δm, m_plus, μ = run_scf(params; verbose=false)
+            return (n=n, U=U, α=α, δm=δm, m_plus=m_plus, μ=μ, error=nothing)
         catch e
             @warn "Failed at n=$n, U=$U, α=$α: $e"
-            return (n=n, U=U, α=α, δm=NaN, m_plus=NaN, error=string(e))
+            return (n=n, U=U, α=α, δm=NaN, m_plus=NaN, μ=NaN, error=string(e))
         end
     end
 end
 
 function main()
-    fixed_α = π/4
-    n_vals = 0.6:0.02:1.4
-    U_vals = 0.0:0.1:5.0
+    fixed_α = π/8
+    n_vals = 0.8:0.1:2.0 # Range of electron filling
+    U_vals = 0.0:1.0:4.0
 
     # Generate parameter grid
     param_list = [(n, U, fixed_α) for n in n_vals, U in U_vals]
@@ -49,14 +49,15 @@ function main()
     results_dict = Dict()
     for r in results
         key = (r.n, r.U)
-        results_dict[key] = (δm=r.δm, m_plus=r.m_plus, error=r.error)
+        results_dict[key] = (δm=r.δm, m_plus=r.m_plus, μ=r.μ, error=r.error)
     end
 
     # Create result matrices for easy plotting
     n_grid = collect(n_vals)
     U_grid = collect(U_vals)
-    δm_matrix = [get(results_dict, (n, U), (δm=NaN, m_plus=NaN, error="")).δm for n in n_grid, U in U_grid]
-    m_plus_matrix = [get(results_dict, (n, U), (δm=NaN, m_plus=NaN, error="")).m_plus for n in n_grid, U in U_grid]
+    δm_matrix = [get(results_dict, (n, U), (δm=NaN, m_plus=NaN, μ=NaN, error="")).δm for n in n_grid, U in U_grid]
+    m_plus_matrix = [get(results_dict, (n, U), (δm=NaN, m_plus=NaN, μ=NaN, error="")).m_plus for n in n_grid, U in U_grid]
+    μ_matrix = [get(results_dict, (n, U), (δm=NaN, m_plus=NaN, μ=NaN, error="")).μ for n in n_grid, U in U_grid]
 
     # Save comprehensive results
     timestamp = Dates.format(now(), "yyyy-mm-dd_HHMMSS")
@@ -64,6 +65,7 @@ function main()
         :results => results_dict,
         :δm_matrix => δm_matrix,
         :m_plus_matrix => m_plus_matrix,
+        :μ_matrix => μ_matrix,
         :n_vals => n_grid,
         :U_vals => U_grid,
         :α => fixed_α,

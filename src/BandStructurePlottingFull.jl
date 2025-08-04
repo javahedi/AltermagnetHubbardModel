@@ -49,7 +49,7 @@ function get_high_symmetry_path(lattice::Symbol, npoints::Int=100)
         labels = ["Γ", "X", "M", "X'", "Γ"] # Changed X2 to X' for common notation
         ticks = [1, npoints, 2npoints, 3npoints, 4npoints]
         
-   elseif lattice == HEXATRIANGULAR || lattice == ALPHA_T3
+   elseif lattice == HEXATRIANGULAR || lattice == ALPHA_T3 || lattice == HONEYCOMB  || lattice == KMmodel
         # Γ -> K -> M -> Γ for honeycomb
         Γ = [0.0, 0.0]
         K = [4π/3, 0.0]
@@ -82,7 +82,7 @@ function plot_band_structure(params::ModelParams, δm::Float64; npoints=100)
     kpath, labels, ticks = get_high_symmetry_path(params.lattice, npoints)
 
     # Determine system size based on lattice
-    if params.lattice == HEXATRIANGULAR || params.lattice == ALPHA_T3
+    if params.lattice == HEXATRIANGULAR || params.lattice == ALPHA_T3 || params.lattice == HONEYCOMB || params.lattice == KMmodel
         matrix_size = 6  # 3 sublattices × 2 spins
         nbands = 3       # 3 bands per spin
         # Define the Sz operator in your (A↑, B↑, A↓, B↓) basis

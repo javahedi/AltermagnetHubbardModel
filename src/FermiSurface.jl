@@ -4,6 +4,7 @@ using PyPlot
 const plt = PyPlot  # Create an alias for PyPlot
 using AltermagneticHubbardModel
 using LinearAlgebra
+
 export plot_fermi_surface_comparison
 
 """

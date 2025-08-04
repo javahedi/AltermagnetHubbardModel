@@ -7,6 +7,9 @@ using LinearAlgebra
 
 export build_hamiltonian
 
+
+
+
 """
     build_hamiltonian(k::Tuple{Float64,Float64}, params::ModelParams, δm::Float64) -> Matrix{Float64}
 
@@ -21,6 +24,8 @@ function build_hamiltonian(k::Tuple{Float64,Float64}, params::ModelParams, δm::
     δ = params.δ
     λ = params.λ
     α = params.α
+    #μ = params.μ
+    n = params.n
 
     
     if params.lattice == SQUARE
@@ -83,63 +88,52 @@ function build_hamiltonian(k::Tuple{Float64,Float64}, params::ModelParams, δm::
         
     elseif params.lattice == HEXATRIANGULAR
 
-        # HEXATRIANGULAR lattice geometry next-nearest neighbor vectors (a=1 units)
-        a1 = [cos(π/3), sin(π/3)]
-        a2 = [0.0, 1.0]
+        # Lattice vectors
+        a1 = [1.0, 0.0]
+        a2 = [1/2, √3/2]
+        a3 = -a1 - a2   # third NN direction in triangular lattice
 
-
-        # Nearest-neighbor vectors (A->B, B->C, C->A)
-        δ₁ = (a1 + a2)/3
-        δ₂ = (-a1 + a2)/3 
-        δ₃ = (-2a1 - a2)/3
-        NN_vectors = [δ₁, δ₂, δ₃]
         
-        # Second-neighbor vectors (same sublattice hopping)
-        d1 = a1    # A->A
-        d2 = a2    # B->B
-        d3 = a1 - a2  # C->C
-        SNN_vectors = [d1, d2, d3, -d1, -d2, -d3]  # Include opposite directions
 
-       
+        # Parameters
+        t1 = params.t1           # NN hopping amplitude
+        t2 = params.t2           # NNN hopping amplitude
+        U  = params.U            # Hubbard interaction strength
+        J  = params.J            # Hund/flavor exchange coupling
 
-        # Build 6×6 Hamiltonian in basis (A↑, B↑, C↑, A↓, B↓, C↓)
-        H = zeros(ComplexF64, 6, 6)
-    
-        # Diagonal terms (sublattice potential and Zeeman splitting)
-        hAA_up = -2t′ * sum(cos(dot(k,d)) for d in (d1, -d1)) - U*δm
-        hBB_up = -2t′ * sum(cos(dot(k,d)) for d in (d2, -d2)) - U*δm
-        hCC_up = -2t′ * sum(cos(dot(k,d)) for d in (d3, -d3)) - U*δm
         
-        hAA_dn = -2t′ * sum(cos(dot(k,d)) for d in (d1, -d1)) + U*δm
-        hBB_dn = -2t′ * sum(cos(dot(k,d)) for d in (d2, -d2)) + U*δm
-        hCC_dn = -2t′ * sum(cos(dot(k,d)) for d in (d3, -d3)) + U*δm
 
+        # Flavor coherence order parameters for exchange J (off-diagonal)
+        # Assume params.chi is a 3x3 Hermitian matrix of flavor coherence MF parameters
+        chi = params.chi  
 
-        # Off-diagonal terms (nearest-neighbor hopping)
-        γk = -t * sum(exp(-1im * dot(k,δ)) for δ in NN_vectors)
-        
-        # Construct Hamiltonian blocks
-        # Spin-up block (1:3, 1:3)
-        H[1,1] = hAA_up
-        H[2,2] = hBB_up
-        H[3,3] = hCC_up
-        H[1,2] = γk  # A↑-B↑ hopping
-        H[2,1] = conj(γk)
-        H[2,3] = γk  # B↑-C↑ hopping
-        H[3,2] = conj(γk)
-        H[1,3] = γk  # A↑-C↑ hopping
-        H[3,1] = conj(γk)
-    
-        # Spin-down block (4:6, 4:6)
-        H[4,4] = hAA_dn
-        H[5,5] = hBB_dn
-        H[6,6] = hCC_dn
-        H[4,5] = γk  # A↓-B↓ hopping
-        H[5,4] = conj(γk)
-        H[5,6] = γk  # B↓-C↓ hopping
-        H[6,5] = conj(γk)
-        H[4,6] = γk  # A↓-C↓ hopping
-        H[6,4] = conj(γk)
+        # Diagonal terms: onsite + NNN hoppings
+        # NNN hoppings may be direction-dependent for flavor-selective symmetry breaking
+        h_diag = zeros(3)
+        h_diag[1] = -2 * t2 * (cos(dot(k, a2)) + cos(dot(k, a3))) - U * δm[1]
+        h_diag[2] = -2 * t2 * (cos(dot(k, a3)) + cos(dot(k, a1))) - U * δm[2]
+        h_diag[3] = -2 * t2 * (cos(dot(k, a1)) + cos(dot(k, a2))) - U * δm[3]
+
+        # Nearest neighbor hoppings (flavor off-diagonal)
+        nn_hops = Dict(
+            (1,2) => -t1 * (exp(im * dot(k, a1)) + exp(-im * dot(k, a1))),
+            (2,3) => -t1 * (exp(im * dot(k, a2)) + exp(-im * dot(k, a2))),
+            (3,1) => -t1 * (exp(im * dot(k, a3)) + exp(-im * dot(k, a3)))
+        )
+
+        # Initialize Hamiltonian
+        H = zeros(ComplexF64, 3, 3)
+
+        # Fill diagonal
+        for i in 1:3
+            H[i,i] = h_diag[i]
+        end
+
+        # Fill off-diagonal NN hopping + flavor exchange (J) mean-field terms
+        for (i,j) in keys(nn_hops)
+            H[i,j] = nn_hops[(i,j)] + J * chi[i,j]
+            H[j,i] = conj(H[i,j])
+        end
 
     elseif params.lattice == ALPHA_T3
 
@@ -186,8 +180,60 @@ function build_hamiltonian(k::Tuple{Float64,Float64}, params::ModelParams, δm::
         H[5,6] = γ_BC
         H[6,5] = conj(γ_BC)
 
+    elseif params.lattice == KMmodel
+        # Phys. Rev. Lett. 133, 086503 (2024)
 
-            
+        μ = 0.0
+        # Define nearest-neighbor (NN) vectors δ_i (A→B)
+        δ1 = [0.0, -1.0]
+        δ2 = [√3/2, 0.5]
+        δ3 = [-√3/2, 0.5]
+        δs = [δ1, δ2, δ3]
+
+        # NN structure factor f(k)
+        f_k = sum(exp(im * dot(k, δ)) for δ in δs)
+
+        # Next-nearest-neighbor (NNN) vectors a_j
+        # Note: These connect sites on the *same* sublattice
+        a1 = δ2 - δ3
+        a2 = δ3 - δ1
+        a3 = δ1 - δ2
+        a_vectors = [a1, a2, a3]
+
+        # α(k): spin-splitting term from SOC
+        α_k = -2λ * sum(sin(dot(k, a)) for a in a_vectors)
+
+        # β(k): real part of NN hopping (τ^x)
+        β_k = -t * sum(cos(dot(k, δ)) for δ in δs)
+
+        # c(k): imaginary part of NN hopping (τ^y)
+        c_k = -t * sum(sin(dot(k, δ)) for δ in δs)
+
+        # Pauli matrices
+        σ₀ = Matrix{Float64}(I, 2, 2)
+        σz = [1.0 0.0; 0.0 -1.0]
+        
+        # τ Pauli matrices (sublattice space)
+        τ₀ = Matrix{Float64}(I, 2, 2)
+        τx = [0.0 1.0; 1.0 0.0]
+        τy = [0.0 -im; im 0.0]
+
+        # Term 1: -μ * I₄
+        Hμ = -μ * Matrix{ComplexF64}(I, 4, 4)
+
+        # Term 2: α(k) * σz ⊗ τ₀
+        Hα = kron(σz, τ₀) * α_k
+
+        # Term 3: β(k) * σ₀ ⊗ τx
+        Hβ = kron(σ₀, τx) * β_k
+
+        # Term 4: c(k) * σ₀ ⊗ τy
+        Hc = kron(σ₀, τy) * c_k
+
+        # Total Hamiltonian
+        H = Hμ + Hα + Hβ + Hc
+
+
     elseif params.lattice == TRIANGULAR
         # Triangular lattice Hamiltonian (to be implemented)
         error("Triangular lattice not yet implemented")

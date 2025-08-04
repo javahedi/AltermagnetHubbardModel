@@ -147,6 +147,8 @@ function plot_spectral_function(params::ModelParams, δm::Float64; nω=200, nk=1
     return fig
 end
 
+
+
 """
     interpolate_kpath(k_points, nk_per_segment)
 

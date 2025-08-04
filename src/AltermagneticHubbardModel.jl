@@ -6,6 +6,12 @@ module AltermagneticHubbardModel
     include("ModelParameters.jl")
     @reexport using .ModelParameters
 
+    include("Utility.jl")
+    @reexport using .Utility
+
+    #include("Susceptibility.jl")
+    #@reexport using .Susceptibility
+
 
     include("LatticeGeometry.jl")
     @reexport using .LatticeGeometry
